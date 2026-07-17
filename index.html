@@ -1,91 +1,807 @@
-<!-- ... (Mantén tu <head> igual) ... -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Profesional - Control de Mantenimientos</title>
+    <!-- Tailwind CSS para Diseño Moderno -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Iconos de Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- SheetJS para Exportar a Excel real -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <!-- PPTXGenJS para Exportar a PowerPoint real -->
+    <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #f8fafc;
+        }
+        /* Custom scrollbars */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="text-slate-800 min-h-screen flex flex-col">
 
-<!-- Dentro del Nav (Selector de Tabs), agrega esta línea -->
-<button onclick="switchTab('agenda')" id="tab-agenda" class="tab-btn border-b-2 border-transparent text-slate-500 hover:text-slate-800 py-4 px-1 font-semibold text-sm tracking-wide flex items-center gap-2 transition">
-    <i data-lucide="calendar" class="w-4 h-4"></i>
-    AGENDA DE MANTTO
-</button>
+    <!-- Header Principal -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="p-2.5 bg-indigo-600 text-white rounded-xl shadow-md shadow-indigo-100">
+                    <i data-lucide="wrench" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold text-slate-900 tracking-tight">Mantenimientos Preventivos</h1>
+                    <p class="text-xs text-slate-500 font-medium">Panel de Control de Avances en Agencias</p>
+                </div>
+            </div>
 
-<!-- ... (En tu <main>, después del grid de KPIs, agrega la sección de Agenda) ... -->
-
-<!-- Seccion oculta/visible dependiendo del tab -->
-<section id="content-agenda" class="hidden bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
-    <div class="flex items-center gap-2.5 mb-6 border-b border-slate-100 pb-3">
-        <div class="p-1.5 bg-indigo-50 text-indigo-600 rounded-lg">
-            <i data-lucide="calendar-plus" class="w-5 h-5"></i>
+            <!-- Acciones Globales -->
+            <div class="flex flex-wrap items-center gap-2.5">
+                <button onclick="exportToExcel()" class="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-lg shadow-sm transition">
+                    <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
+                    Exportar Excel
+                </button>
+                <button onclick="exportToPPTX()" class="flex items-center gap-2 px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white text-sm font-semibold rounded-lg shadow-sm transition">
+                    <i data-lucide="presentation" class="w-4 h-4"></i>
+                    Exportar PowerPoint
+                </button>
+                <button onclick="confirmReset()" class="flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold rounded-lg transition">
+                    <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                    Reset General
+                </button>
+            </div>
         </div>
-        <h2 class="text-base font-bold text-slate-900">Programar Nuevo Mantenimiento</h2>
-    </div>
-    
-    <form id="schedule-form" onsubmit="handleSchedule(event)" class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-        <input type="date" id="sched-date" class="bg-slate-50 border border-slate-200 rounded-lg py-2 px-3 text-sm" required />
-        <input type="text" id="sched-agency" placeholder="Agencia o Depto" class="bg-slate-50 border border-slate-200 rounded-lg py-2 px-3 text-sm" required />
-        <input type="text" id="sched-desc" placeholder="Detalle (Ej. Limpieza, Update)" class="bg-slate-50 border border-slate-200 rounded-lg py-2 px-3 text-sm col-span-1 md:col-span-1" required />
-        <button type="submit" class="bg-indigo-600 text-white text-sm font-bold rounded-lg hover:bg-indigo-700">Guardar Cita</button>
-    </form>
+    </header>
 
-    <div class="overflow-x-auto">
-        <table class="w-full text-left">
-            <thead class="bg-slate-50 text-slate-400 text-[11px] uppercase">
-                <tr>
-                    <th class="py-3 px-4">Fecha</th>
-                    <th class="py-3 px-4">Agencia</th>
-                    <th class="py-3 px-4">Detalle</th>
-                    <th class="py-3 px-4">Acción</th>
-                </tr>
-            </thead>
-            <tbody id="agenda-table-body" class="divide-y divide-slate-100"></tbody>
-        </table>
-    </div>
-</section>
-
-<!-- ... (En tu Script, añade la lógica) ... -->
-
-<script>
-    // 1. Inicializa la agenda en tu estado
-    if (!state.agenda) state.agenda = [];
-
-    function handleSchedule(e) {
-        e.preventDefault();
-        const nuevaCita = {
-            id: Date.now(),
-            fecha: document.getElementById('sched-date').value,
-            agencia: document.getElementById('sched-agency').value,
-            desc: document.getElementById('sched-desc').value
-        };
-        state.agenda.push(nuevaCita);
-        saveState();
-        document.getElementById('schedule-form').reset();
-        renderAgenda();
-    }
-
-    function renderAgenda() {
-        const tbody = document.getElementById('agenda-table-body');
-        tbody.innerHTML = state.agenda.sort((a,b) => new Date(a.fecha) - new Date(b.fecha)).map(cita => `
-            <tr>
-                <td class="py-3 px-4 font-bold text-slate-700">${cita.fecha}</td>
-                <td class="py-3 px-4 text-sm">${cita.agencia}</td>
-                <td class="py-3 px-4 text-sm">${cita.desc}</td>
-                <td class="py-3 px-4">
-                    <button onclick="deleteCita(${cita.id})" class="text-red-500 hover:text-red-700">Eliminar</button>
-                </td>
-            </tr>
-        `).join('');
-    }
-
-    function deleteCita(id) {
-        state.agenda = state.agenda.filter(c => c.id !== id);
-        saveState();
-        renderAgenda();
-    }
-
-    // Actualiza tu switchTab para mostrar/ocultar la nueva sección
-    function switchTab(agencyKey) {
-        // Esconde todo
-        document.getElementById('agency-content').classList.toggle('hidden', agencyKey === 'agenda');
-        document.getElementById('content-agenda').classList.toggle('hidden', agencyKey !== 'agenda');
+    <main class="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full space-y-8">
         
-        // ... (resto de tu lógica de switchTab original)
-        if(agencyKey === 'agenda') renderAgenda();
-    }
-</script>
+        <!-- Tarjeta de Control Rápido de Nuevos Equipos -->
+        <section class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+            <div class="flex items-center gap-2.5 mb-4 border-b border-slate-100 pb-3">
+                <div class="p-1.5 bg-indigo-50 text-indigo-600 rounded-lg">
+                    <i data-lucide="plus-circle" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <h2 class="text-base font-bold text-slate-900">Agregar Equipo No Considerado</h2>
+                    <p class="text-xs text-slate-500">Registra un nuevo equipo o amplía un departamento existente para ajustar las métricas.</p>
+                </div>
+            </div>
+            <form id="add-equipment-form" onsubmit="handleAddEquipment(event)" class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1.5" for="form-agency">Agencia / Indicador</label>
+                    <select id="form-agency" class="w-full bg-slate-50 border border-slate-200 rounded-lg py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+                        <option value="honda">HONDA (Verde)</option>
+                        <option value="honda motos">HONDA MOTOS MEXICALI (Naranja)</option>
+                        <option value="bodega">BODEGA MEXICALI  (Azul)</option>
+                        <option value="kia">KIA FUTURA MEXICALI (Morado)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1.5" for="form-dept">Departamento / Empleado</label>
+                    <input id="form-dept" type="text" placeholder="Ej. Ventas, Siniestros, Juan Pérez..." class="w-full bg-slate-50 border border-slate-200 rounded-lg py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" required />
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1.5" for="form-qty">Cant. Equipos</label>
+                        <input id="form-qty" type="number" min="1" value="1" class="w-full bg-slate-50 border border-slate-200 rounded-lg py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" required />
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1.5" for="form-done">Manto. Hecho</label>
+                        <input id="form-done" type="number" min="0" value="0" class="w-full bg-slate-50 border border-slate-200 rounded-lg py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" required />
+                    </div>
+                </div>
+                <div>
+                    <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold py-2 px-4 rounded-lg shadow-sm transition flex items-center justify-center gap-2 h-[42px]">
+                        <i data-lucide="plus" class="w-4 h-4"></i>
+                        Ingresar y Calcular
+                    </button>
+                </div>
+            </form>
+        </section>
+
+        <!-- Sección de Indicadores KPI Globales -->
+        <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            <!-- KPI Global 1 -->
+            <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex items-center justify-between">
+                <div>
+                    <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Avance Consolidado</span>
+                    <h3 id="kpi-global-pct" class="text-3xl font-extrabold text-slate-900 mt-1">0%</h3>
+                    <p class="text-[11px] text-slate-400 font-medium mt-1">Suma de todas las agencias</p>
+                </div>
+                <div class="p-3.5 bg-indigo-50 text-indigo-600 rounded-xl">
+                    <i data-lucide="activity" class="w-6 h-6"></i>
+                </div>
+            </div>
+            <!-- KPI Global 2 -->
+            <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex items-center justify-between">
+                <div>
+                    <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Equipos Totales</span>
+                    <h3 id="kpi-global-computers" class="text-3xl font-extrabold text-slate-900 mt-1">0</h3>
+                    <p class="text-[11px] text-slate-400 font-medium mt-1">Carga instalada registrada</p>
+                </div>
+                <div class="p-3.5 bg-blue-50 text-blue-600 rounded-xl">
+                    <i data-lucide="monitor" class="w-6 h-6"></i>
+                </div>
+            </div>
+            <!-- KPI Global 3 -->
+            <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex items-center justify-between">
+                <div>
+                    <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Mantto. Completados</span>
+                    <h3 id="kpi-global-done" class="text-3xl font-extrabold text-slate-900 mt-1 font-mono">0</h3>
+                    <p id="kpi-global-done-sub" class="text-[11px] text-emerald-600 font-semibold mt-1">0 de meta cumplida</p>
+                </div>
+                <div class="p-3.5 bg-emerald-50 text-emerald-600 rounded-xl">
+                    <i data-lucide="check-circle-2" class="w-6 h-6"></i>
+                </div>
+            </div>
+            <!-- KPI Global 4 -->
+            <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex items-center justify-between">
+                <div>
+                    <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Pendientes de Mes</span>
+                    <h3 id="kpi-global-remaining" class="text-3xl font-extrabold text-red-600 mt-1 font-mono">0</h3>
+                    <p class="text-[11px] text-slate-400 font-medium mt-1">Equipos restantes activos</p>
+                </div>
+                <div class="p-3.5 bg-red-50 text-red-600 rounded-xl">
+                    <i data-lucide="alert-circle" class="w-6 h-6"></i>
+                </div>
+            </div>
+        </section>
+
+        <!-- Selector Rápido de Agencias / Tabs -->
+        <div class="border-b border-slate-200">
+            <nav class="flex space-x-8" aria-label="Tabs de Agencias">
+                <button onclick="switchTab('honda')" id="tab-honda" class="tab-btn border-b-2 border-emerald-500 text-emerald-600 py-4 px-1 font-bold text-sm tracking-wide flex items-center gap-2 transition">
+                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                    KIA FUTURA
+                </button>
+                <button onclick="switchTab('toyota')" id="tab-toyota" class="tab-btn border-b-2 border-transparent text-slate-500 hover:text-slate-800 py-4 px-1 font-semibold text-sm tracking-wide flex items-center gap-2 transition">
+                    <span class="w-2.5 h-2.5 rounded-full bg-orange-500"></span>
+                    HONDA MOTOS MEXICALI
+                </button>
+                <button onclick="switchTab('hyundai')" id="tab-hyundai" class="tab-btn border-b-2 border-transparent text-slate-500 hover:text-slate-800 py-4 px-1 font-semibold text-sm tracking-wide flex items-center gap-2 transition">
+                    <span class="w-2.5 h-2.5 rounded-full bg-sky-500"></span>
+                    BODEGA MEXICALI
+                </button>
+                <button onclick="switchTab('chevrolet')" id="tab-chevrolet" class="tab-btn border-b-2 border-transparent text-slate-500 hover:text-slate-800 py-4 px-1 font-semibold text-sm tracking-wide flex items-center gap-2 transition">
+                    <span class="w-2.5 h-2.5 rounded-full bg-fuchsia-500"></span>
+                    HONDA AUTOS MEXICALI
+                </button>
+            </nav>
+        </div>
+
+        <!-- Sección de Tablas y Avance por Agencia Seleccionada -->
+        <section id="agency-content" class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Columna Izquierda: Tabla Detallada (Ocupa 2 de 3 cols) -->
+            <div class="lg:col-span-2 bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden flex flex-col">
+                <div class="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                    <div>
+                        <h3 id="table-agency-title" class="text-base font-bold text-slate-900 uppercase">Detalle de Equipos</h3>
+                        <p class="text-xs text-slate-500 mt-0.5">Control directo de computadoras e incremento rápido del avance.</p>
+                    </div>
+                    <span id="badge-total-equipos" class="px-2.5 py-1 bg-slate-100 text-slate-800 text-xs font-bold rounded-full">69 Equipos Registrados</span>
+                </div>
+                
+                <div class="overflow-x-auto max-h-[500px]">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="border-b border-slate-200 text-[11px] font-bold text-slate-400 uppercase tracking-wider bg-slate-50">
+                                <th class="py-3 px-6">Departamento / Cuenta</th>
+                                <th class="py-3 px-6 text-center w-36">Computadoras</th>
+                                <th class="py-3 px-6 text-center w-36">Mantenimiento Realizado</th>
+                                <th class="py-3 px-6 text-center w-36">Mantenimiento Restante</th>
+                                <th class="py-3 px-6 text-center w-16">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="agency-table-body" class="divide-y divide-slate-100 text-sm">
+                            <!-- Inyectado mediante JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Columna Derecha: Tarjeta de Porcentaje de Avance Estilo Circular Moderno -->
+            <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex flex-col justify-between items-center text-center">
+                <div class="w-full border-b border-slate-100 pb-3 mb-4 text-left">
+                    <h3 class="text-base font-bold text-slate-900 uppercase">Medición de Avance</h3>
+                    <p class="text-xs text-slate-500">Gráfico de cumplimiento meta contra rezago.</p>
+                </div>
+
+                <!-- Anillo Dinámico SVG -->
+                <div class="relative flex items-center justify-center my-6">
+                    <svg class="w-56 h-56 transform -rotate-90">
+                        <circle cx="112" cy="112" r="95" stroke="#f1f5f9" stroke-width="18" fill="transparent" />
+                        <circle id="progress-ring-fill" cx="112" cy="112" r="95" stroke="#10b981" stroke-width="18" fill="transparent" stroke-dasharray="596.9" stroke-dashoffset="596.9" stroke-linecap="round" class="transition-all duration-500" />
+                    </svg>
+                    <div class="absolute flex flex-col items-center justify-center">
+                        <span id="progress-ring-percentage" class="text-4xl font-extrabold text-slate-900 tracking-tight">0%</span>
+                        <span class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-0.5">COMPLETADO</span>
+                    </div>
+                </div>
+
+                <!-- Leyenda de colores -->
+                <div class="w-full grid grid-cols-2 gap-4 mt-4 bg-slate-50 p-4 rounded-xl">
+                    <div class="text-left">
+                        <div class="flex items-center gap-1.5 text-xs font-bold text-slate-500 uppercase">
+                            <span id="legend-color-progreso" class="w-2.5 h-2.5 rounded bg-emerald-500"></span>
+                            PROGRESO
+                        </div>
+                        <span id="metric-progreso-num" class="text-lg font-extrabold text-slate-800 block mt-1 font-mono">0</span>
+                    </div>
+                    <div class="text-left border-l border-slate-200 pl-4">
+                        <div class="flex items-center gap-1.5 text-xs font-bold text-slate-500 uppercase">
+                            <span class="w-2.5 h-2.5 rounded bg-slate-300"></span>
+                            FALTANTE
+                        </div>
+                        <span id="metric-faltante-num" class="text-lg font-extrabold text-slate-800 block mt-1 font-mono">0</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-white border-t border-slate-200 mt-12 py-6">
+        <div class="max-w-7xl mx-auto px-4 text-center text-xs text-slate-400 font-medium">
+            Dashboard de Mantenimientos Preventivos 2026. Diseñado para un control simplificado y asertivo de activos de TI.
+        </div>
+    </footer>
+
+    <!-- Scripts de Control Lógico del Dashboard -->
+    <script>
+        // Datos Base Basados en "AVANZE DE MANTENIMIENTOS 19-01-2026.xlsx" y capturas
+        const BASELINE_DATA = {
+            honda: {
+                title: "KIA FUTURA MEXICALI",
+                color: "#10b981", // Verde Esmeralda (Image_4eb640.png)
+                bgClass: "bg-emerald-500",
+                textClass: "text-emerald-600",
+                borderClass: "border-emerald-500",
+                items: [
+                    { dept: "SINIESTROS", comp: 4, done: 4 },
+                    { dept: "TALLER", comp: 9, done: 9 },
+                    { dept: "GARANTIAS", comp: 4, done: 4 },
+                    { dept: "SERVICIO POSTVENTA", comp: 9, done: 8 },
+                    { dept: "GTE POSTVENTA", comp: 1, done: 0 },
+                    { dept: "CONTABILIDAD", comp: 5, done: 5 },
+                    { dept: "REFACCIONES", comp: 3, done: 3 },
+                    { dept: "VENTAS", comp: 8, done: 1 },
+                    { dept: "SALA DE JUNTAS", comp: 1, done: 0 },
+                    { dept: "CDC", comp: 7, done: 0 },
+                    { dept: "SEGUROS", comp: 1, done: 0 },
+                    { dept: "ISAAC GONZALEZ", comp: 1, done: 0 },
+                    { dept: "FACTURACION", comp: 1, done: 1 },
+                    { dept: "PLACAS", comp: 1, done: 0 },
+                    { dept: "FINANCIAMIENTO", comp: 1, done: 0 },
+                    { dept: "MERCADOTECNIA", comp: 2, done: 0 },
+                    { dept: "COORD.CDC", comp: 1, done: 0 },
+                    { dept: "RECEPCION", comp: 2, done: 2 },
+                    { dept: "SEMINUEVOS", comp: 3, done: 0 },
+                    { dept: "TMKT POSTVENTA", comp: 5, done: 0 }
+                ]
+            },
+            toyota: {
+                title: "HONDA MOTOS MEXICALI",
+                color: "#f97316", // Naranja (Image_4eb660.png)
+                bgClass: "bg-orange-500",
+                textClass: "text-orange-600",
+                borderClass: "border-orange-500",
+                items: [
+                    { dept: "GTE VENTA", comp: 1, done: 1 },
+                    { dept: "CAJA", comp: 1, done: 1 },
+                    { dept: "REFACCIONES", comp: 1, done: 1 },
+                    { dept: "TALLER", comp: 2, done: 2 },
+                    { dept: "VENTAS", comp: 4, done: 4 }
+                ]
+            },
+            hyundai: {
+                title: "BODEGA MEXICALI",
+                color: "#0ea5e9", // Azul cielo (Image_4eb680.png)
+                bgClass: "bg-sky-500",
+                textClass: "text-sky-600",
+                borderClass: "border-sky-500",
+                items: [
+                    { dept: "ALBERTO DEL VALLE", comp: 1, done: 1 },
+                    { dept: "FABIAN MORENO", comp: 1, done: 1 },
+                    { dept: "KARLA RAMOS", comp: 1, done: 1 },
+                    { dept: "MARCOS", comp: 1, done: 1 },
+                    { dept: "LAVADO", comp: 1, done: 1 }
+                ]
+            },
+            chevrolet: {
+                title: "HONDA AUTOS MEXICALI",
+                color: "#a855f7", // Morado (Image_4eb6ba.png)
+                bgClass: "bg-fuchsia-500",
+                textClass: "text-fuchsia-600",
+                borderClass: "border-fuchsia-500",
+                items: [
+                    { dept: "SINIESTROS", comp: 2, done: 2 },
+                    { dept: "TALLER", comp: 5, done: 5 },
+                    { dept: "GARANTIAS", comp: 3, done: 3 },
+                    { dept: "ASESORES SERVICIO", comp: 4, done: 4 },
+                    { dept: "GTE POSTVENTA", comp: 1, done: 0 },
+                    { dept: "CONTABILIDAD", comp: 8, done: 8 },
+                    { dept: "REFACCIONES", comp: 3, done: 2 },
+                    { dept: "VENTAS", comp: 6, done: 0 },
+                    { dept: "PERIQUERAS", comp: 3, done: 3 },
+                    { dept: "CDC", comp: 7, done: 7 },
+                    { dept: "SEGUROS", comp: 1, done: 1 },
+                    { dept: "SALA DE JUNTAS", comp: 1, done: 1 },
+                    { dept: "PLACAS", comp: 1, done: 1 },
+                    { dept: "FINANCIAMIENTO", comp: 2, done: 2 },
+                    { dept: "MERCADOTECNIA", comp: 1, done: 0 },
+                    { dept: "COORD.CDC", comp: 1, done: 0 },
+                    { dept: "RECEPCION", comp: 1, done: 1 },
+                    { dept: "SEMINUEVOS", comp: 5, done: 3 },
+                    { dept: "TMKT POSTVENTA", comp: 5, done: 5 }
+                ]
+            }
+        };
+
+        // Estado inicial de la aplicación
+        let state = JSON.parse(localStorage.getItem('mantenimiento_state_v1'));
+        if (!state) {
+            state = JSON.parse(JSON.stringify(BASELINE_DATA)); // Clonación profunda segura
+            saveState();
+        }
+
+        let currentAgency = 'honda';
+
+        // Inicializar iconos y render inicial
+        window.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            renderDashboard();
+        });
+
+        function saveState() {
+            localStorage.setItem('mantenimiento_state_v1', JSON.stringify(state));
+        }
+
+        // Renderizado Dinámico
+        function renderDashboard() {
+            renderKpis();
+            renderTableAndChart();
+        }
+
+        // Calcular y renderizar KPIs de la parte superior (Consolidados)
+        function renderKpis() {
+            let totalComputers = 0;
+            let totalDone = 0;
+
+            Object.keys(state).forEach(key => {
+                state[key].items.forEach(item => {
+                    totalComputers += parseInt(item.comp || 0);
+                    totalDone += parseInt(item.done || 0);
+                });
+            });
+
+            const totalRemaining = totalComputers - totalDone;
+            const globalPct = totalComputers > 0 ? Math.round((totalDone / totalComputers) * 100) : 0;
+
+            document.getElementById('kpi-global-pct').textContent = `${globalPct}%`;
+            document.getElementById('kpi-global-computers').textContent = totalComputers;
+            document.getElementById('kpi-global-done').textContent = totalDone;
+            document.getElementById('kpi-global-done-sub').textContent = `${totalDone} de meta cumplida`;
+            document.getElementById('kpi-global-remaining').textContent = totalRemaining;
+        }
+
+        // Cambiar entre Pestañas de Agencias
+        function switchTab(agencyKey) {
+            currentAgency = agencyKey;
+            
+            // Actualizar clases de botones de pestañas
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.className = "tab-btn border-b-2 border-transparent text-slate-500 hover:text-slate-800 py-4 px-1 font-semibold text-sm tracking-wide flex items-center gap-2 transition";
+            });
+
+            const currentObj = state[agencyKey];
+            const activeBtn = document.getElementById(`tab-${agencyKey}`);
+            if (activeBtn) {
+                activeBtn.className = `tab-btn border-b-2 ${currentObj.borderClass} ${currentObj.textClass} py-4 px-1 font-bold text-sm tracking-wide flex items-center gap-2 transition`;
+            }
+
+            renderTableAndChart();
+        }
+
+        // Renderizar Tabla del departamento seleccionado y Gráfico
+        function renderTableAndChart() {
+            const agency = state[currentAgency];
+            
+            // Cambiar textos y clases de la tabla
+            document.getElementById('table-agency-title').textContent = agency.title;
+            
+            const totalAgencyComputers = agency.items.reduce((sum, item) => sum + parseInt(item.comp || 0), 0);
+            const totalAgencyDone = agency.items.reduce((sum, item) => sum + parseInt(item.done || 0), 0);
+            const totalAgencyRemaining = totalAgencyComputers - totalAgencyDone;
+            const agencyPct = totalAgencyComputers > 0 ? Math.round((totalAgencyDone / totalAgencyComputers) * 100) : 0;
+
+            document.getElementById('badge-total-equipos').textContent = `${totalAgencyComputers} Equipos Registrados`;
+
+            // Construir el cuerpo de la tabla
+            const tbody = document.getElementById('agency-table-body');
+            tbody.innerHTML = '';
+
+            agency.items.forEach((item, index) => {
+                const rest = item.comp - item.done;
+                const restClass = rest > 0 ? 'bg-red-50 text-red-700 font-bold' : 'text-slate-400';
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50/80 transition-colors";
+                tr.innerHTML = `
+                    <td class="py-3 px-6 font-semibold text-slate-800">${item.dept}</td>
+                    <td class="py-3 px-6 text-center">
+                        <div class="flex items-center justify-center gap-2">
+                            <button onclick="updateItemValue('${currentAgency}', ${index}, 'comp', -1)" class="w-6 h-6 rounded bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center font-bold text-xs">-</button>
+                            <span class="w-8 font-mono text-center font-bold text-slate-700">${item.comp}</span>
+                            <button onclick="updateItemValue('${currentAgency}', ${index}, 'comp', 1)" class="w-6 h-6 rounded bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center font-bold text-xs">+</button>
+                        </div>
+                    </td>
+                    <td class="py-3 px-6 text-center">
+                        <div class="flex items-center justify-center gap-2">
+                            <button onclick="updateItemValue('${currentAgency}', ${index}, 'done', -1)" class="w-6 h-6 rounded bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center font-bold text-xs">-</button>
+                            <span class="w-8 font-mono text-center font-bold text-slate-700">${item.done}</span>
+                            <button onclick="updateItemValue('${currentAgency}', ${index}, 'done', 1)" class="w-6 h-6 rounded bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center font-bold text-xs">+</button>
+                        </div>
+                    </td>
+                    <td class="py-3 px-6 text-center">
+                        <span class="px-2.5 py-1 rounded-full text-xs font-mono inline-block ${restClass}">${rest}</span>
+                    </td>
+                    <td class="py-3 px-6 text-center">
+                        <button onclick="deleteRow('${currentAgency}', ${index})" class="text-slate-400 hover:text-red-500 transition-colors" title="Eliminar fila">
+                            <i data-lucide="trash-2" class="w-4 h-4 mx-auto"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            // Re-vincular los iconos cargados dinámicamente en la tabla
+            lucide.createIcons();
+
+            // Actualizar Gráfico Circular
+            updateProgressRing(agencyPct, agency.color);
+
+            // Actualizar caja de métricas secundarias
+            document.getElementById('legend-color-progreso').style.backgroundColor = agency.color;
+            document.getElementById('metric-progreso-num').textContent = totalAgencyDone;
+            document.getElementById('metric-faltante-num').textContent = totalAgencyRemaining;
+        }
+
+        // Cambiar valores individuales directamente en tabla (+ o -)
+        function updateItemValue(agencyKey, index, key, change) {
+            const item = state[agencyKey].items[index];
+            if (key === 'comp') {
+                item.comp = Math.max(1, item.comp + change);
+                // Si la computadora es menor que el mantenimiento hecho, ajustamos
+                if (item.comp < item.done) {
+                    item.done = item.comp;
+                }
+            } else if (key === 'done') {
+                item.done = Math.max(0, Math.min(item.comp, item.done + change));
+            }
+            saveState();
+            renderDashboard();
+        }
+
+        // Eliminar fila de la tabla de la agencia
+        function deleteRow(agencyKey, index) {
+            if (confirm("¿Estás seguro de que deseas eliminar este departamento?")) {
+                state[agencyKey].items.splice(index, 1);
+                saveState();
+                renderDashboard();
+            }
+        }
+
+        // Actualizar el porcentaje del SVG circular de avance
+        function updateProgressRing(percent, color) {
+            const circle = document.getElementById('progress-ring-fill');
+            const pctText = document.getElementById('progress-ring-percentage');
+            
+            // Radio de la circunferencia es 95. Perímetro = 2 * PI * r = 596.9
+            const circumference = 2 * Math.PI * 95;
+            const offset = circumference - (percent / 100) * circumference;
+            
+            circle.style.strokeDasharray = `${circumference} ${circumference}`;
+            circle.style.strokeDashoffset = offset;
+            circle.style.stroke = color;
+            pctText.textContent = `${percent}%`;
+        }
+
+        // Manejar el formulario para agregar equipo
+        function handleAddEquipment(event) {
+            event.preventDefault();
+
+            const agencyKey = document.getElementById('form-agency').value;
+            const deptName = document.getElementById('form-dept').value.trim().toUpperCase();
+            const qty = parseInt(document.getElementById('form-qty').value);
+            const done = parseInt(document.getElementById('form-done').value);
+
+            if (done > qty) {
+                alert("Los mantenimientos realizados no pueden ser mayores que el total de computadoras de este lote.");
+                return;
+            }
+
+            const itemsList = state[agencyKey].items;
+            const existingItem = itemsList.find(item => item.dept === deptName);
+
+            if (existingItem) {
+                // Si existe el departamento, le sumamos los equipos
+                existingItem.comp += qty;
+                existingItem.done += done;
+            } else {
+                // Si no existe, lo agregamos como nuevo registro
+                itemsList.push({
+                    dept: deptName,
+                    comp: qty,
+                    done: done
+                });
+            }
+
+            saveState();
+            
+            // Cambiar de pestaña automáticamente a la que se actualizó
+            switchTab(agencyKey);
+            renderDashboard();
+
+            // Limpiar formulario
+            document.getElementById('add-equipment-form').reset();
+            alert(`Equipo(s) agregados correctamente al indicador ${agencyKey.toUpperCase()}`);
+        }
+
+        // Confirmar Reset de Datos
+        function confirmReset() {
+            if (confirm("¿Estás seguro de que quieres restablecer todos los indicadores? Perderás cualquier cambio o equipo nuevo agregado.")) {
+                state = JSON.parse(JSON.stringify(BASELINE_DATA));
+                saveState();
+                switchTab('honda');
+                renderDashboard();
+                alert("Indicadores restaurados al estado original con éxito.");
+            }
+        }
+
+        /* EXPORTAR DATOS A EXCEL (SheetJS) */
+        function exportToExcel() {
+            const wb = XLSX.utils.book_new();
+
+            // Hoja 1: Resumen General
+            const summaryData = [
+                ["REPORTE EJECUTIVO DE AVANCES DE MANTENIMIENTO PREVENTIVO 2026"],
+                [],
+                ["AGENCIA", "EQUIPOS TOTALES", "MANTTO. REALIZADO", "PENDIENTES", "PORCENTAJE AVANCE"]
+            ];
+
+            Object.keys(state).forEach(key => {
+                const agency = state[key];
+                const totalComp = agency.items.reduce((sum, item) => sum + parseInt(item.comp || 0), 0);
+                const totalDone = agency.items.reduce((sum, item) => sum + parseInt(item.done || 0), 0);
+                const pct = totalComp > 0 ? Math.round((totalDone / totalComp) * 100) : 0;
+                summaryData.push([
+                    key.toUpperCase(),
+                    totalComp,
+                    totalDone,
+                    totalComp - totalDone,
+                    `${pct}%`
+                ]);
+            });
+
+            const wsSummary = XLSX.utils.aoa_to_sheet(summaryData);
+            XLSX.utils.book_append_sheet(wb, wsSummary, "RESUMEN");
+
+            // Crear una pestaña independiente para cada agencia
+            Object.keys(state).forEach(key => {
+                const agency = state[key];
+                const sheetData = [
+                    [agency.title],
+                    [],
+                    ["DEPARTAMENTO", "COMPUTADORA", "MANTTO REALIZADO", "MANTTO RESTANTE"]
+                ];
+
+                agency.items.forEach(item => {
+                    sheetData.push([
+                        item.dept,
+                        item.comp,
+                        item.done,
+                        item.comp - item.done
+                    ]);
+                });
+
+                // Fila de Totales
+                const totalComp = agency.items.reduce((sum, item) => sum + parseInt(item.comp || 0), 0);
+                const totalDone = agency.items.reduce((sum, item) => sum + parseInt(item.done || 0), 0);
+                sheetData.push([]);
+                sheetData.push([
+                    "TOTAL DE EQUIPOS",
+                    totalComp,
+                    totalDone,
+                    totalComp - totalDone
+                ]);
+
+                const wsAgency = XLSX.utils.aoa_to_sheet(sheetData);
+                XLSX.utils.book_append_sheet(wb, wsAgency, key.toUpperCase());
+            });
+
+            // Descargar el archivo Excel
+            XLSX.writeFile(wb, "Avance_Mantenimientos_Preventivos_2026.xlsx");
+        }
+
+        /* EXPORTAR DATOS A POWERPOINT (PPTXGenJS) */
+        function exportToPPTX() {
+            let pptx = new PptxGenJS();
+            pptx.layout = "LAYOUT_16x9";
+
+            // DIAPOSITIVA 1: Portada Elegante
+            let slide1 = pptx.addSlide();
+            // Fondo oscuro para dar contraste y verse Premium
+            slide1.background = { color: "1e293b" }; 
+            
+            slide1.addText("REPORTE DE AVANCES", {
+                x: 1.0, y: 1.8, w: 11.3, h: 0.8,
+                fontSize: 48, bold: true, color: "f1f5f9", fontFace: "Arial"
+            });
+            slide1.addText("Control de Mantenimientos Preventivos Mensuales", {
+                x: 1.0, y: 2.7, w: 11.3, h: 0.5,
+                fontSize: 22, color: "38bdf8", fontFace: "Arial"
+            });
+            slide1.addText("Consolidado General de Agencias de TI", {
+                x: 1.0, y: 3.3, w: 11.3, h: 0.5,
+                fontSize: 16, color: "94a3b8", fontFace: "Arial"
+            });
+            // Línea estética decorativa
+            slide1.addShape(pptx.shapes.RECTANGLE, {
+                x: 1.0, y: 4.1, w: 3.0, h: 0.08, fill: "38bdf8"
+            });
+            slide1.addText("Estatus generado automáticamente en tiempo real.", {
+                x: 1.0, y: 5.8, w: 11.3, h: 0.4,
+                fontSize: 12, italic: true, color: "cbd5e1", fontFace: "Arial"
+            });
+
+            // Calcular Métricas Consolidadas para Diapositiva 2
+            let totalComputers = 0;
+            let totalDone = 0;
+            Object.keys(state).forEach(key => {
+                state[key].items.forEach(item => {
+                    totalComputers += parseInt(item.comp || 0);
+                    totalDone += parseInt(item.done || 0);
+                });
+            });
+            const globalPct = totalComputers > 0 ? Math.round((totalDone / totalComputers) * 100) : 0;
+            const globalRemaining = totalComputers - totalDone;
+
+            // DIAPOSITIVA 2: Resumen Ejecutivo Consolidado (Blanca)
+            let slide2 = pptx.addSlide();
+            slide2.addText("AVANCE EJECUTIVO GLOBAL", {
+                x: 0.8, y: 0.6, w: 11.7, h: 0.5,
+                fontSize: 28, bold: true, color: "0f172a", fontFace: "Arial"
+            });
+            slide2.addText("Métricas consolidadas de infraestructura tecnológica", {
+                x: 0.8, y: 1.1, w: 11.7, h: 0.4,
+                fontSize: 14, color: "64748b", fontFace: "Arial"
+            });
+
+            // Tarjetas de datos generales
+            // 1. Equipos Registrados
+            slide2.addShape(pptx.shapes.RECTANGLE, { x: 0.8, y: 2.0, w: 3.6, h: 1.8, fill: "f1f5f9" });
+            slide2.addText("EQUIPOS EVALUADOS", { x: 1.0, y: 2.2, w: 3.2, h: 0.3, fontSize: 12, bold: true, color: "475569" });
+            slide2.addText(String(totalComputers), { x: 1.0, y: 2.6, w: 3.2, h: 0.8, fontSize: 44, bold: true, color: "0f172a" });
+            
+            // 2. Mantenimientos Hechos
+            slide2.addShape(pptx.shapes.RECTANGLE, { x: 4.8, y: 2.0, w: 3.6, h: 1.8, fill: "ecfdf5" });
+            slide2.addText("MANTO. COMPLETO", { x: 5.0, y: 2.2, w: 3.2, h: 0.3, fontSize: 12, bold: true, color: "065f46" });
+            slide2.addText(String(totalDone), { x: 5.0, y: 2.6, w: 3.2, h: 0.8, fontSize: 44, bold: true, color: "047857" });
+
+            // 3. Pendientes de Mes
+            slide2.addShape(pptx.shapes.RECTANGLE, { x: 8.8, y: 2.0, w: 3.6, h: 1.8, fill: "fef2f2" });
+            slide2.addText("RESTA POR HACER", { x: 9.0, y: 2.2, w: 3.2, h: 0.3, fontSize: 12, bold: true, color: "991b1b" });
+            slide2.addText(String(globalRemaining), { x: 9.0, y: 2.6, w: 3.2, h: 0.8, fontSize: 44, bold: true, color: "b91c1c" });
+
+            // Indicador de Progreso Porcentual
+            slide2.addShape(pptx.shapes.RECTANGLE, { x: 0.8, y: 4.4, w: 11.6, h: 1.5, fill: "eff6ff" });
+            slide2.addText(`AVANCE PROMEDIO GLOBAL: ${globalPct}% DE LA CARGA TOTAL`, {
+                x: 1.2, y: 4.6, w: 10.8, h: 0.4, fontSize: 14, bold: true, color: "1e40af"
+            });
+            // Barra de progreso de fondo
+            slide2.addShape(pptx.shapes.RECTANGLE, { x: 1.2, y: 5.1, w: 10.8, h: 0.3, fill: "cbd5e1" });
+            // Barra de progreso de llenado
+            let fillWidth = (globalPct / 100) * 10.8;
+            if (fillWidth > 0) {
+                slide2.addShape(pptx.shapes.RECTANGLE, { x: 1.2, y: 5.1, w: fillWidth, h: 0.3, fill: "1e40af" });
+            }
+
+            // DIAPOSITIVAS 3 a 6: Una por cada Agencia con sus tablas respectivas
+            Object.keys(state).forEach(key => {
+                const agency = state[key];
+                const totalComp = agency.items.reduce((sum, item) => sum + parseInt(item.comp || 0), 0);
+                const totalDone = agency.items.reduce((sum, item) => sum + parseInt(item.done || 0), 0);
+                const pct = totalComp > 0 ? Math.round((totalDone / totalComp) * 100) : 0;
+                const remaining = totalComp - totalDone;
+
+                let slide = pptx.addSlide();
+                
+                // Cabecera de la diapositiva
+                slide.addText(agency.title, {
+                    x: 0.8, y: 0.5, w: 11.7, h: 0.5,
+                    fontSize: 24, bold: true, color: "0f172a", fontFace: "Arial"
+                });
+
+                // Indicador de avance lateral
+                slide.addText(`Porcentaje de Avance: ${pct}%`, {
+                    x: 0.8, y: 1.0, w: 6.0, h: 0.3,
+                    fontSize: 14, bold: true, color: "475569", fontFace: "Arial"
+                });
+
+                // Barra de avance visual pequeña de la agencia
+                slide.addShape(pptx.shapes.RECTANGLE, { x: 0.8, y: 1.3, w: 11.6, h: 0.12, fill: "e2e8f0" });
+                let agencyFillWidth = (pct / 100) * 11.6;
+                if (agencyFillWidth > 0) {
+                    slide.addShape(pptx.shapes.RECTANGLE, { x: 0.8, y: 1.3, w: agencyFillWidth, h: 0.12, fill: "10b981" });
+                }
+
+                // Generar Tabla de Datos
+                let tableRows = [
+                    [
+                        { text: "DEPARTAMENTO", options: { bold: true, color: "ffffff", fill: "0f172a" } },
+                        { text: "EQUIPOS", options: { bold: true, color: "ffffff", fill: "0f172a", align: "center" } },
+                        { text: "REALIZADO", options: { bold: true, color: "ffffff", fill: "0f172a", align: "center" } },
+                        { text: "RESTANTE", options: { bold: true, color: "ffffff", fill: "0f172a", align: "center" } }
+                    ]
+                ];
+
+                // Limitar filas mostradas en la diapositiva para que no se desborde el diseño
+                const maxRowsOnSlide = 9;
+                const displayItems = agency.items.slice(0, maxRowsOnSlide);
+
+                displayItems.forEach(item => {
+                    tableRows.push([
+                        { text: item.dept, options: { align: "left" } },
+                        { text: String(item.comp), options: { align: "center" } },
+                        { text: String(item.done), options: { align: "center" } },
+                        { text: String(item.comp - item.done), options: { align: "center" } }
+                    ]);
+                });
+
+                // Si se recortaron filas, poner aviso
+                if (agency.items.length > maxRowsOnSlide) {
+                    tableRows.push([
+                        { text: `... y ${agency.items.length - maxRowsOnSlide} departamentos más (Consultar reporte Excel detallado)`, options: { align: "left", italic: true } },
+                        { text: "", options: {} },
+                        { text: "", options: {} },
+                        { text: "", options: {} }
+                    ]);
+                }
+
+                // Fila de Totales de la Agencia
+                tableRows.push([
+                    { text: "TOTAL DE EQUIPOS", options: { bold: true, fill: "f1f5f9" } },
+                    { text: String(totalComp), options: { bold: true, fill: "f1f5f9", align: "center" } },
+                    { text: String(totalDone), options: { bold: true, fill: "f1f5f9", align: "center" } },
+                    { text: String(remaining), options: { bold: true, fill: "f1f5f9", align: "center" } }
+                ]);
+
+                // Añadir tabla a la diapositiva
+                slide.addTable(tableRows, {
+                    x: 0.8, y: 1.7, w: 11.6, h: 4.8,
+                    fontSize: 11,
+                    border: { type: "line", width: 1, color: "cbd5e1" }
+                });
+            });
+
+            // Guardar Presentación
+            pptx.writeFile({ fileName: "Reporte_Presentacion_Mantenimientos.pptx" });
+        }
+    </script>
+</body>
+</html>
+
